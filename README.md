@@ -15,6 +15,7 @@ A single-page web app that walks through RFP qualification **one question at a t
 - Strategic Override path for low scores
 - Friction Forecast capture
 - Final summary with top reasons, weak spots, risks, and next action
+- Material 3-inspired visual system (color, typography, elevation, rounded components)
 - Local persistence in `localStorage`
 - Record export as JSON and CSV
 
