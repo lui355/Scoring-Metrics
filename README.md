@@ -8,7 +8,8 @@ A single-page web app that walks through RFP qualification **one question at a t
 ## Features
 - Step-by-step wizard with progress (`Step X of Y`)
 - Back navigation and **Save & Exit**
-- Hard Filter early-stop flow (instant decline)
+- Hard Filter flow using Yes / No / Unsure with context guidance
+- No = instant decline; Unsure = Need Info path with optional continue
 - Weighted Fit Score (0-100)
 - Effort-sensitive thresholds (Heavy effort adds +10 threshold)
 - Strategic Override path for low scores
@@ -45,5 +46,5 @@ Each saved evaluation includes:
 
 ## Notes
 - Running score is intentionally hidden until the result screen.
-- Hard filter detection immediately shows decline results.
+- Hard filter results now show: `Hard Filter Failed: [A/B/C...] — [Title]` plus why it matters and info requests when unsure.
 - Export files are generated client-side.

@@ -155,6 +155,24 @@ small {
   color: var(--muted);
 }
 
+.helper-block {
+  margin: 0.9rem 0;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fbfcff;
+}
+
+.helper-block h3 {
+  margin: 0.6rem 0 0.3rem;
+  font-size: 0.98rem;
+}
+
+.helper-block p {
+  margin: 0.3rem 0 0.6rem;
+}
+
+
 @media (max-width: 580px) {
   .app-shell {
     padding: 1rem 0.7rem 2.2rem;
