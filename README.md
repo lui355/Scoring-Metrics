@@ -11,6 +11,7 @@ A single-page web app that walks through RFP qualification **one question at a t
 - Hard Filter flow using Yes / No / Unsure with context guidance
 - No = instant decline; Unsure = Need Info path with optional continue
 - Weighted Fit Score (0-100)
+- Detailed 1 vs 5 scoring examples in each category step (definition + concrete business scenarios)
 - Effort-sensitive thresholds (Heavy effort adds +10 threshold)
 - Strategic Override path for low scores
 - Friction Forecast capture

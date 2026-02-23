@@ -149,14 +149,86 @@ const hardFilters = [
 ];
 
 const scoringQuestions = [
-  { key: "strategicAlignment", label: "Strategic Alignment", weight: 20 },
-  { key: "budgetAlignment", label: "Budget Alignment", weight: 20 },
-  { key: "capabilityMatch", label: "Capability Match", weight: 15 },
-  { key: "decisionStructure", label: "Decision Structure", weight: 15 },
-  { key: "timelineFeasibility", label: "Timeline Feasibility", weight: 10 },
-  { key: "proposalCostVsWinProbability", label: "Proposal Cost vs Win Probability", weight: 10 },
-  { key: "relationshipAccess", label: "Relationship & Access", weight: 5 },
-  { key: "riskExposure", label: "Risk Exposure", weight: 5, reverse: true },
+  {
+    key: "strategicAlignment",
+    label: "Strategic Alignment",
+    weight: 20,
+    definition: "Measures how well this project supports long-term studio goals, ideal clients, and portfolio direction.",
+    onePoor:
+      "Client is outside our target sectors, offering purely tactical work with no strategic benefit or portfolio value.",
+    fiveExcellent:
+      "Project is with an ideal client profile, advances our positioning in a desired niche, offers a strong case study opportunity, and opens the door for repeat engagements.",
+  },
+  {
+    key: "budgetAlignment",
+    label: "Budget Alignment",
+    weight: 20,
+    definition: "Evaluates whether the disclosed budget realistically supports the scope and expected quality without discounting.",
+    onePoor: "Budget is far below internal cost estimates, forcing discounting or scope reduction with minimal margin.",
+    fiveExcellent:
+      "Budget exceeds our healthy internal estimate, covers all required work comfortably, and allows proper staffing with margin.",
+  },
+  {
+    key: "capabilityMatch",
+    label: "Capability Match",
+    weight: 15,
+    definition: "Assesses if the team has proven expertise, systems, and capacity to deliver at excellence.",
+    onePoor: "Scope includes major deliverables unfamiliar to the team, requiring heavy outsourcing and causing execution risk.",
+    fiveExcellent: "Scope fits well within proven expertise and past delivery, with clear process and available team.",
+  },
+  {
+    key: "decisionStructure",
+    label: "Decision Structure",
+    weight: 15,
+    definition: "Determines clarity of authority and governance for decisions and approvals.",
+    onePoor:
+      "No single authority, committee decisions expected, conflicting stakeholders, and undefined approval timelines.",
+    fiveExcellent:
+      "A named decision-maker with authority to approve exists, feedback is consolidated, and approval windows are defined with expected SLAs.",
+  },
+  {
+    key: "timelineFeasibility",
+    label: "Timeline Feasibility",
+    weight: 10,
+    definition: "Assesses whether the schedule is realistic relative to scope, review cycles, and team capacity.",
+    onePoor:
+      "Timeline is compressed for major scope with no client review commitments and tight overlap with other work.",
+    fiveExcellent:
+      "Timeline is proportional to scope, client provides clear review SLAs, and schedule fits internal capacity with buffer.",
+  },
+  {
+    key: "proposalCostVsWinProbability",
+    label: "Proposal Cost vs Win Probability",
+    weight: 10,
+    definition:
+      "Compares internal effort to prepare the proposal against the likelihood of winning based on relationship and competitive landscape (similar to lead scoring where effort and prospect quality determine engagement priority).",
+    onePoor:
+      "Proposal requires heavy custom effort with mockups and research, and client engaged through open RFP with many competitors.",
+    fiveExcellent:
+      "Proposal requires minimal effort, client issued a direct invitation or shortlist, strong differentiation, and high perceived win likelihood.",
+  },
+  {
+    key: "relationshipAccess",
+    label: "Relationship & Access",
+    weight: 5,
+    definition:
+      "Measures strength of existing relationship and level of access to decision-makers for clarification or influence.",
+    onePoor:
+      "Cold RFP with no conversation allowed, strict procurement firewall, no warm introductions, and no insider information.",
+    fiveExcellent:
+      "Existing relationship, direct access to key stakeholders, and transparent conversation throughout evaluation.",
+  },
+  {
+    key: "riskExposure",
+    label: "Risk Exposure",
+    weight: 5,
+    reverse: true,
+    definition: "Evaluates contract, legal, reputational, and payment risk.",
+    onePoor:
+      "Non-negotiable heavy indemnity clauses, high insurance demands, unclear payment terms, and political or reputational sensitivity.",
+    fiveExcellent:
+      "Standard or negotiable contract, clear payment terms, standard insurance requirements, and low reputational risk.",
+  },
 ];
 
 const scaleOptions = [
@@ -363,6 +435,14 @@ function buildHardStopResult(filter, mode) {
 }
 
 function saveRecord() {
+  const categoryRatingDetails = scoringQuestions.map((question) => ({
+    category: question.label,
+    definition: question.definition,
+    rating: Number(state.answers.categoryRatings[question.key] || 0),
+    points: Number(state.result?.categoryScores?.[question.key] || 0),
+    weight: question.weight,
+  }));
+
   const record = {
     timestamp: new Date().toISOString(),
     clientName: state.answers.clientName,
@@ -375,6 +455,8 @@ function saveRecord() {
     recommendation: state.result?.recommendation || "DECLINE",
     frictionForecast: state.answers.frictionForecast,
     notes: state.answers.notes,
+    categoryRatingDetails,
+    scoringGuidanceVersion: "detailed-v1",
   };
   const records = getRecords();
   records.unshift(record);
@@ -448,6 +530,12 @@ function renderStep(step, totalSteps) {
     } else if (step.type === "textarea") {
       body += `<textarea id="answer">${escapeHtml(answerValue)}</textarea>`;
     } else if (step.type === "scale") {
+      const categoryMeta = scoringQuestions.find((item) => item.key === step.key);
+      body += `<div class="helper-block">
+        <p><strong>Definition (short):</strong> ${escapeHtml(categoryMeta.definition)}</p>
+        <p><strong>1 – Very Poor:</strong> ${escapeHtml(categoryMeta.onePoor)}</p>
+        <p><strong>5 – Excellent:</strong> ${escapeHtml(categoryMeta.fiveExcellent)}</p>
+      </div>`;
       body += `<div class="choice-list">${scaleOptions
         .map(
           (opt) => `<label class="choice"><input type="radio" name="scale" value="${opt.value}" ${
@@ -609,6 +697,8 @@ function buildCsv(records) {
     "proposalEffort",
     "hardFilter",
     "hardFilterWhy",
+    "categoryRatings",
+    "categoryScores",
     "frictionForecast",
     "notes",
   ];
@@ -620,6 +710,14 @@ function buildCsv(records) {
             ? record.hardFilterStatus?.recommendedDeclineReason || ""
             : key === "hardFilterWhy"
               ? record.hardFilterStatus?.why || ""
+              : key === "categoryRatings"
+                ? scoringQuestions
+                    .map((question) => `${question.label}: ${record.answers?.categoryRatings?.[question.key] || ""}`)
+                    .join(" | ")
+                : key === "categoryScores"
+                  ? scoringQuestions
+                      .map((question) => `${question.label}: ${record.categoryScores?.[question.key] || 0}/${question.weight}`)
+                      .join(" | ")
               : record[key] || "";
         return `"${String(value).replaceAll('"', '""')}"`;
       })
@@ -644,12 +742,16 @@ function renderResult() {
   if (!result) return render();
 
   const categoryLabelByKey = Object.fromEntries(scoringQuestions.map((q) => [q.key, q.label]));
+  const categoryDefinitionByKey = Object.fromEntries(scoringQuestions.map((q) => [q.key, q.definition]));
   const reasonList = result.hardFilterFailure
     ? [result.hardFilterFailure.recommendedDeclineReason]
-    : result.topCategories.map(([key, value]) => `${categoryLabelByKey[key]} (${value}/${scoringQuestions.find((q) => q.key === key).weight})`);
+    : result.topCategories.map(
+        ([key, value]) =>
+          `${categoryLabelByKey[key]} — ${categoryDefinitionByKey[key]} (${value}/${scoringQuestions.find((q) => q.key === key).weight})`
+      );
   const weakList = result.hardFilterFailure
     ? ["Hard filter did not pass"]
-    : result.weakCategories.map(([key, value]) => `${categoryLabelByKey[key]} (${value})`);
+    : result.weakCategories.map(([key, value]) => `${categoryLabelByKey[key]} — ${categoryDefinitionByKey[key]} (${value})`);
 
   const nextAction = result.hardFilterFailure
     ? "Decline with template email or collect requested info and reassess."
