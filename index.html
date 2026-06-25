@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fishbowl Topics - Create Bowl</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+  <script defer src="./js/app.js"></script>
+</head>
+<body class="min-h-screen bg-zinc-950 text-white">
+  <main class="mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center px-5 py-10">
+    <section class="grid w-full gap-8 md:grid-cols-[1.1fr_.9fr] md:items-center">
+      <div>
+        <p class="mb-4 inline-flex rounded-full border border-blue-400/30 bg-blue-400/10 px-4 py-2 text-sm font-semibold text-blue-200">Fishbowl Topics</p>
+        <h1 class="text-5xl font-semibold tracking-tight sm:text-7xl">Create a bowl for better discussions.</h1>
+        <p class="mt-6 max-w-xl text-xl leading-8 text-zinc-300">Invite participants to anonymously submit topics, watch them appear live, then pick prompts at random for the group.</p>
+      </div>
+
+      <div class="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-blue-950/20 backdrop-blur">
+        <label for="name" class="mb-3 block text-sm font-semibold uppercase tracking-wide text-zinc-400">Session name</label>
+        <input id="name" type="text" maxlength="100" placeholder="Table 4 / Morning Session" class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-5 text-xl outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-400/10">
+        <button id="createButton" class="mt-5 w-full rounded-2xl bg-white px-6 py-5 text-xl font-bold text-zinc-950 transition hover:bg-blue-100 active:scale-[.99]">Create Bowl & QR Code</button>
+        <div id="created" class="mt-6 hidden rounded-3xl bg-white p-5 text-center text-zinc-950">
+          <div id="qr" class="mx-auto flex justify-center"></div>
+          <p class="mt-4 text-sm font-semibold text-zinc-600">Scan to submit anonymously</p>
+          <a id="adminLink" class="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-zinc-950 px-4 py-4 text-base font-bold text-white" href="#">Open facilitator dashboard</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('createButton').addEventListener('click', createBowl);
+    });
+
+    async function createBowl() {
+      if (!Fishbowl.requireConfigured()) return;
+      const button = document.getElementById('createButton');
+      const name = document.getElementById('name').value.trim() || 'Untitled Fishbowl';
+      button.disabled = true;
+      button.textContent = 'Creating...';
+      const { data, error } = await Fishbowl.client.from('fishbowls').insert({ name }).select().single();
+      button.disabled = false;
+      button.textContent = 'Create Bowl & QR Code';
+      if (error) return Fishbowl.showToast(error.message, 'error');
+
+      const submitUrl = Fishbowl.submitUrl(data.id);
+      document.getElementById('created').classList.remove('hidden');
+      document.getElementById('adminLink').href = Fishbowl.adminUrl(data.id);
+      Fishbowl.renderQr('qr', submitUrl, 220);
+      Fishbowl.showToast('Bowl created. Opening dashboard...', 'success');
+      window.setTimeout(() => { window.location.href = Fishbowl.adminUrl(data.id); }, 900);
+    }
+  </script>
+</body>
+</html>
