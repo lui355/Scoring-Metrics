@@ -18,6 +18,11 @@ create table public.submissions (
 alter table public.fishbowls enable row level security;
 alter table public.submissions enable row level security;
 
+grant usage on schema public to anon;
+grant select, insert, update on public.fishbowls to anon;
+grant select, insert on public.submissions to anon;
+
+
 create policy "Anyone can create fishbowls"
   on public.fishbowls for insert
   to anon

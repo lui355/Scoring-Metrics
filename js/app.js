@@ -5,10 +5,20 @@ const FISHBOWL_CONFIG = {
 };
 
 const Fishbowl = (() => {
-  const client = window.supabase.createClient(
-    FISHBOWL_CONFIG.supabaseUrl,
-    FISHBOWL_CONFIG.supabaseAnonKey
-  );
+  let cachedClient = null;
+
+  function getClient() {
+    if (!requireConfigured()) {
+      throw new Error('Supabase is not configured.');
+    }
+    if (!cachedClient) {
+      cachedClient = window.supabase.createClient(
+        FISHBOWL_CONFIG.supabaseUrl,
+        FISHBOWL_CONFIG.supabaseAnonKey
+      );
+    }
+    return cachedClient;
+  }
 
   function getBowlId() {
     return new URLSearchParams(window.location.search).get('id');
@@ -83,7 +93,9 @@ const Fishbowl = (() => {
   }
 
   return {
-    client,
+    get client() {
+      return getClient();
+    },
     adminUrl,
     escapeHtml,
     getBowlId,
